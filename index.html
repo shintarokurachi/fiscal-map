@@ -77,8 +77,10 @@
 <body>
 
 <div id="loading">
-  <div>地図データを読み込み中...</div>
+  <div style="font-size:18px;font-weight:bold;color:#1a3a5c;">財政指標マップ</div>
+  <div id="loading-msg" style="margin-top:12px;color:#555;">地図データを読み込み中...</div>
   <div id="loading-bar-wrap"><div id="loading-bar"></div></div>
+  <div id="loading-sub" style="margin-top:10px;font-size:12px;color:#999;">大きいファイルのため数秒〜数十秒かかる場合があります</div>
 </div>
 
 <div id="map"></div>
@@ -246,9 +248,19 @@ function setProgress(pct) {
   document.getElementById('loading-bar').style.width = pct + '%';
 }
 
+function setMsg(msg) {
+  document.getElementById('loading-msg').textContent = msg;
+}
+
+function showError(detail) {
+  document.getElementById('loading').style.display = 'none';
+  const box = document.getElementById('error-box');
+  box.style.display = 'block';
+  if (detail) box.innerHTML += '<br><small>詳細: ' + detail + '</small>';
+}
+
 function loadGeoJSON() {
   setProgress(10);
-  // まずローカルファイルを試行、失敗したらGitHub rawを使用
   const urls = [
     './municipalities.geojson',
     'https://raw.githubusercontent.com/smartnews-smri/japan-topography/main/data/municipality/geojson/s0010/N03-21_210101.json'
@@ -256,24 +268,41 @@ function loadGeoJSON() {
 
   function tryLoad(idx) {
     if (idx >= urls.length) {
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('error-box').style.display = 'block';
+      showError('すべてのURLが失敗しました');
       return;
     }
+    const label = idx === 0 ? 'ローカルファイル' : '外部サーバー';
+    setMsg('地図データを読み込み中... (' + label + ')');
+    setProgress(10 + idx * 10);
+
     fetch(urls[idx])
       .then(r => {
         if (!r.ok) throw new Error('HTTP ' + r.status);
-        setProgress(50);
+        setMsg('データを解析中... (大きいファイルのため少しお待ちください)');
+        setProgress(40);
         return r.json();
       })
       .then(geojson => {
+        setMsg('地図を描画中...');
         setProgress(80);
         allGeoData = geojson;
+
+        // プロパティ名を自動検出
+        if (geojson.features && geojson.features.length > 0) {
+          const props = geojson.features[0].properties;
+          console.log('GeoJSONプロパティ:', Object.keys(props));
+          console.log('サンプル:', props);
+        }
+
         renderLayer();
         setProgress(100);
-        setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 400);
+        setMsg('完了！');
+        setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 500);
       })
-      .catch(() => tryLoad(idx + 1));
+      .catch(err => {
+        console.warn('URL失敗 [' + idx + ']:', urls[idx], err.message);
+        tryLoad(idx + 1);
+      });
   }
   tryLoad(0);
 }
