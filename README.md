@@ -26,7 +26,8 @@
 外部からの読み込みが不安定な場合は、以下の手順でリポジトリに含めることを推奨します。
 
 1. 以下のURLから `municipalities.geojson` をダウンロード
-   👉 https://github.com/niiyz/JapanChoroplethMap/raw/master/geojson/custom/municipalities.geojson
+   👉 https://github.com/smartnews-smri/japan-topography/raw/main/data/municipality/geojson/s0010/N03-21_210101.json
+   （ダウンロード後、ファイル名を `municipalities.geojson` に変更してください）
 
 2. ダウンロードしたファイルを `index.html` と同じフォルダに置く
 
@@ -53,8 +54,8 @@
 - **財政データ**：総務省「地方公共団体の主要財政指標一覧（令和６年度）」
   https://www.soumu.go.jp/iken/shihyo_ichiran.html
 
-- **地図データ（GeoJSON）**：niiyz/JapanChoroplethMap（CC BY）
-  https://github.com/niiyz/JapanChoroplethMap
+- **地図データ（GeoJSON）**：smartnews-smri/japan-topography（国土数値情報由来）
+  https://github.com/smartnews-smri/japan-topography
 
 ## 💻 ローカルで試す方法
 

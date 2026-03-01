@@ -125,7 +125,7 @@
     <div id="error-box" id="error-box">
       ⚠️ 地図データの読み込みに失敗しました。<br>
       インターネット接続を確認してください。<br><br>
-      または、<a href="https://github.com/niiyz/JapanChoroplethMap/raw/master/geojson/custom/municipalities.geojson" target="_blank">こちら</a>からGeoJSONをダウンロードし、<code>municipalities.geojson</code>という名前でHTMLと同じフォルダに置いてください。
+      または、<a href="https://github.com/smartnews-smri/japan-topography/raw/main/data/municipality/geojson/s0010/N03-21_210101.json" target="_blank">こちら</a>からGeoJSONをダウンロードし、<code>municipalities.geojson</code>という名前でHTMLと同じフォルダに置いてください。
     </div>
 
     <div class="section-title">市区町村情報</div>
@@ -251,7 +251,7 @@ function loadGeoJSON() {
   // まずローカルファイルを試行、失敗したらGitHub rawを使用
   const urls = [
     './municipalities.geojson',
-    'https://raw.githubusercontent.com/niiyz/JapanChoroplethMap/master/geojson/custom/municipalities.geojson'
+    'https://raw.githubusercontent.com/smartnews-smri/japan-topography/main/data/municipality/geojson/s0010/N03-21_210101.json'
   ];
 
   function tryLoad(idx) {
