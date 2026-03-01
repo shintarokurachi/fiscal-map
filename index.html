@@ -154,6 +154,52 @@ const MUNICIPALITIES = [{"code":"01100","pref":"北海道","name":"札幌市","f
 const dataByCode = {};
 MUNICIPALITIES.forEach(d => { dataByCode[d.code] = d; });
 
+// 名前をキーにした辞書（コードマッチ失敗時の保険）
+const dataByName = {};
+MUNICIPALITIES.forEach(d => { dataByName[d.name] = d; });
+
+// GeoJSONプロパティから自動でコードフィールド・名前フィールドを検出
+let geoCodeField = null;
+let geoNameField = null;
+let geoPrefField = null;
+
+function detectFields(feature) {
+  const p = feature.properties;
+  // コードフィールド：5桁数字の文字列を探す
+  for (const [k, v] of Object.entries(p)) {
+    if (typeof v === 'string' && /^\d{5}$/.test(v.trim())) {
+      geoCodeField = k; break;
+    }
+  }
+  // 名前フィールド：よく使われる候補順に確認
+  const nameCandidates = ['N03_004','cityName','city','name','市区町村名','name_ja'];
+  for (const k of nameCandidates) {
+    if (p[k] !== undefined) { geoNameField = k; break; }
+  }
+  // 都道府県フィールド
+  const prefCandidates = ['N03_001','prefName','pref','prefecture','都道府県名','pref_ja'];
+  for (const k of prefCandidates) {
+    if (p[k] !== undefined) { geoPrefField = k; break; }
+  }
+  console.log('検出フィールド:', { geoCodeField, geoNameField, geoPrefField });
+  console.log('サンプルプロパティ:', p);
+}
+
+function findMunicipalityData(feature) {
+  const p = feature.properties;
+  // コードで検索
+  if (geoCodeField) {
+    const code = (p[geoCodeField] || '').toString().trim();
+    if (dataByCode[code]) return dataByCode[code];
+  }
+  // 名前で検索
+  if (geoNameField) {
+    const name = (p[geoNameField] || '').toString().trim();
+    if (dataByName[name]) return dataByName[name];
+  }
+  return null;
+}
+
 // ===== 指標設定 =====
 const INDICATORS = {
   fiscal:    { label:'財政力指数',       unit:'',   colors:['#ffffcc','#c7e9b4','#7fcdbb','#41b6c4','#2c7fb8','#253494'], note:'1.0以上が財政力豊か' },
@@ -197,8 +243,7 @@ function getColor(value, key) {
 
 // ===== スタイル =====
 function style(feature) {
-  const code5 = (feature.properties.N03_007 || '').toString().trim();
-  const d = dataByCode[code5];
+  const d = findMunicipalityData(feature);
   const value = d ? d[currentKey] : null;
   return {
     fillColor: getColor(value, currentKey),
@@ -217,10 +262,9 @@ function onEachFeature(feature, layer) {
       lyr.setStyle({ weight:2, color:'#333', fillOpacity:1 });
       lyr.bringToFront();
 
-      const code5 = (feature.properties.N03_007 || '').toString().trim();
-      const d = dataByCode[code5];
-      const name = feature.properties.N03_004 || d?.name || '不明';
-      const pref = feature.properties.N03_001 || d?.pref || '';
+      const d = findMunicipalityData(feature);
+      const name = (geoNameField ? feature.properties[geoNameField] : null) || d?.name || '不明';
+      const pref = (geoPrefField ? feature.properties[geoPrefField] : null) || d?.pref || '';
 
       document.getElementById('info-placeholder').style.display = 'none';
       document.getElementById('info-content').style.display = 'block';
@@ -289,9 +333,7 @@ function loadGeoJSON() {
 
         // プロパティ名を自動検出
         if (geojson.features && geojson.features.length > 0) {
-          const props = geojson.features[0].properties;
-          console.log('GeoJSONプロパティ:', Object.keys(props));
-          console.log('サンプル:', props);
+          detectFields(geojson.features[0]);
         }
 
         renderLayer();
